@@ -4,6 +4,8 @@
     <bytecodeTargetLevel>
       <module name="FRC-Control-Center.main" target="11" />
       <module name="FRC-Control-Center.test" target="11" />
+      <module name="Kumquat-Vision.main" target="11" />
+      <module name="Kumquat-Vision.test" target="11" />
     </bytecodeTargetLevel>
   </component>
 </project>

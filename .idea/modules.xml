@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FRC-Control-Center.iml" filepath="$PROJECT_DIR$/.idea/modules/FRC-Control-Center.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FRC-Control-Center.main.iml" filepath="$PROJECT_DIR$/.idea/modules/FRC-Control-Center.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FRC-Control-Center.test.iml" filepath="$PROJECT_DIR$/.idea/modules/FRC-Control-Center.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Kumquat-Vision.iml" filepath="$PROJECT_DIR$/.idea/modules/Kumquat-Vision.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Kumquat-Vision.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Kumquat-Vision.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Kumquat-Vision.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Kumquat-Vision.test.iml" />
     </modules>
   </component>
 </project>
