@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FRC-Control-Center.iml" filepath="$PROJECT_DIR$/.idea/modules/FRC-Control-Center.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FRC-Control-Center.main.iml" filepath="$PROJECT_DIR$/.idea/modules/FRC-Control-Center.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FRC-Control-Center.test.iml" filepath="$PROJECT_DIR$/.idea/modules/FRC-Control-Center.test.iml" />
+    </modules>
+  </component>
+</project>
