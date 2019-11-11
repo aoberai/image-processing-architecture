@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group 'frc8'
@@ -22,6 +23,10 @@ dependencies {
     compile 'kryonet:kryonet:2.21'
     compile 'net.sourceforge.argparse4j:argparse4j:0.8.1'
     compile 'com.fasterxml:jackson-module-json-org:0.9.1'
+    compile 'edu.wpi.first.cscore:cscore-java:2019.4.1'
+    runtime 'edu.wpi.first.cscore:cscore-jni:2019.4.1:all'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
+
+mainClassName = 'com.palyrobotics.Main'
