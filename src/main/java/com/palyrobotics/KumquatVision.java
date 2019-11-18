@@ -3,6 +3,7 @@ package com.palyrobotics;
 import com.esotericsoftware.kryonet.Server;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.highgui.HighGui;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.IOException;
@@ -32,10 +33,11 @@ public class KumquatVision {
         var capture = new VideoCapture(0);
         while (capture.isOpened()) {
             if (capture.read(mat)) {
-
+                HighGui.imshow("Vision", mat);
+                HighGui.waitKey(10);
             }
         }
+        HighGui.destroyAllWindows();
         capture.release();
-//        HighGui.destroyAllWindows();
     }
 }

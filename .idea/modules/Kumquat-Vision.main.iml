@@ -17,9 +17,10 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Gradle: kryonet:kryonet:2.21" level="project" />
+    <orderEntry type="library" name="Gradle: kryonet:kryonet:2.21-2" level="project" />
     <orderEntry type="library" name="Gradle: net.sourceforge.argparse4j:argparse4j:0.8.1" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml:jackson-module-json-org:0.9.1" level="project" />
+    <orderEntry type="library" name="Gradle: com.esotericsoftware.kryo:kryo:2.20" level="project" />
     <orderEntry type="library" name="Gradle: com.esotericsoftware.reflectasm:reflectasm:shaded:1.07" level="project" />
     <orderEntry type="library" name="Gradle: com.esotericsoftware.minlog:minlog:1.2" level="project" />
     <orderEntry type="library" name="Gradle: org.objenesis:objenesis:2.1" level="project" />
@@ -27,5 +28,6 @@
     <orderEntry type="library" name="Gradle: org.json:json:20090211" level="project" />
     <orderEntry type="library" name="Gradle: junit:junit:4.8.2" level="project" />
     <orderEntry type="library" name="Gradle: org.codehaus.jackson:jackson-core-asl:1.7.4" level="project" />
+    <orderEntry type="library" name="Gradle: org.ow2.asm:asm:4.0" level="project" />
   </component>
 </module>

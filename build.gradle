@@ -15,17 +15,14 @@ compileJava {
 
 repositories {
     mavenCentral()
-    maven { url "http://first.wpi.edu/FRC/roborio/maven/release" }
     maven { url "https://clojars.org/repo" }
 }
 
 dependencies {
-    compile 'kryonet:kryonet:2.21'
+    compile 'kryonet:kryonet:2.21-2'
     compile 'net.sourceforge.argparse4j:argparse4j:0.8.1'
     compile 'com.fasterxml:jackson-module-json-org:0.9.1'
     compile fileTree(dir: 'lib', include: ['*.jar'])
-
-    testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 mainClassName = 'com.palyrobotics.KumquatVision'
@@ -33,8 +30,6 @@ mainClassName = 'com.palyrobotics.KumquatVision'
 jar {
     from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
-        attributes(
-                'Main-Class': 'com.palyrobotics.KumquatVision'
-        )
+        attributes 'Main-Class': 'com.palyrobotics.KumquatVision'
     }
 }
