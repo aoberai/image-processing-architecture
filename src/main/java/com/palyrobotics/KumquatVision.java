@@ -1,13 +1,8 @@
 package com.palyrobotics;
 
 import com.esotericsoftware.kryonet.Server;
-import edu.wpi.cscore.CameraServerJNI;
-import edu.wpi.cscore.CvSink;
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.first.wpiutil.RuntimeLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.highgui.HighGui;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.IOException;
@@ -17,12 +12,7 @@ public class KumquatVision {
     private static final int PORT = 5809;
 
     static {
-        var openCvLoader = new RuntimeLoader<>(Core.NATIVE_LIBRARY_NAME, RuntimeLoader.getDefaultExtractionRoot(), Core.class);
-        try {
-            openCvLoader.loadLibraryHashed();
-        } catch (IOException loadException) {
-            loadException.printStackTrace();
-        }
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
     public static void main(String... arguments) {
@@ -42,7 +32,7 @@ public class KumquatVision {
         var capture = new VideoCapture(0);
         while (capture.isOpened()) {
             if (capture.read(mat)) {
-                mat.data()
+
             }
         }
         capture.release();
