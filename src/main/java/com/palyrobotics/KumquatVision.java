@@ -29,6 +29,7 @@ public class KumquatVision {
             connectException.printStackTrace();
         }
 
+
         var mat = new Mat();
         var capture = new VideoCapture(0);
         while (capture.isOpened()) {
