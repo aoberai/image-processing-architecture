@@ -23,13 +23,7 @@ dependencies {
     compile 'kryonet:kryonet:2.21'
     compile 'net.sourceforge.argparse4j:argparse4j:0.8.1'
     compile 'com.fasterxml:jackson-module-json-org:0.9.1'
-    compile 'edu.wpi.first.wpiutil:wpiutil-java:2019.4.1'
-    compile 'edu.wpi.first.cscore:cscore-java:2019.4.1'
-    runtime 'edu.wpi.first.cscore:cscore-jni:2019.4.1:all'
-    compile 'edu.wpi.first.thirdparty.frc2019.opencv:opencv-java:3.4.4-5'
-    runtime 'edu.wpi.first.thirdparty.frc2019.opencv:opencv-jni:3.4.4-5:windowsx86-64'
-    runtime 'edu.wpi.first.thirdparty.frc2019.opencv:opencv-jni:3.4.4-5:linuxx86-64'
-    runtime 'edu.wpi.first.thirdparty.frc2019.opencv:opencv-jni:3.4.4-5:osxx86-64'
+    compile fileTree(dir: 'lib', include: ['*.jar'])
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }

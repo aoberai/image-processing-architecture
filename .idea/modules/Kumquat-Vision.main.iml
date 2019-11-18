@@ -11,19 +11,12 @@
     <orderEntry type="library" name="Gradle: kryonet:kryonet:2.21" level="project" />
     <orderEntry type="library" name="Gradle: net.sourceforge.argparse4j:argparse4j:0.8.1" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml:jackson-module-json-org:0.9.1" level="project" />
-    <orderEntry type="library" name="Gradle: edu.wpi.first.wpiutil:wpiutil-java:2019.4.1" level="project" />
-    <orderEntry type="library" name="Gradle: edu.wpi.first.cscore:cscore-java:2019.4.1" level="project" />
-    <orderEntry type="library" name="Gradle: edu.wpi.first.thirdparty.frc2019.opencv:opencv-java:3.4.4-5" level="project" />
     <orderEntry type="library" name="Gradle: com.esotericsoftware.reflectasm:reflectasm:shaded:1.07" level="project" />
     <orderEntry type="library" name="Gradle: com.esotericsoftware.minlog:minlog:1.2" level="project" />
     <orderEntry type="library" name="Gradle: org.objenesis:objenesis:2.1" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: edu.wpi.first.cscore:cscore-jni:all:2019.4.1" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: edu.wpi.first.thirdparty.frc2019.opencv:opencv-jni:windowsx86-64:3.4.4-5" level="project" />
     <orderEntry type="library" name="Gradle: org.codehaus.jackson:jackson-mapper-asl:1.7.4" level="project" />
     <orderEntry type="library" name="Gradle: org.json:json:20090211" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: edu.wpi.first.thirdparty.frc2019.opencv:opencv-jni:linuxx86-64:3.4.4-5" level="project" />
     <orderEntry type="library" name="Gradle: junit:junit:4.8.2" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Gradle: edu.wpi.first.thirdparty.frc2019.opencv:opencv-jni:osxx86-64:3.4.4-5" level="project" />
     <orderEntry type="library" name="Gradle: org.codehaus.jackson:jackson-core-asl:1.7.4" level="project" />
   </component>
 </module>
