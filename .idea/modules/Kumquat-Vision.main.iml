@@ -23,6 +23,7 @@
     <orderEntry type="library" name="Gradle: org.json:json:20090211" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: edu.wpi.first.thirdparty.frc2019.opencv:opencv-jni:linuxx86-64:3.4.4-5" level="project" />
     <orderEntry type="library" name="Gradle: junit:junit:4.8.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: edu.wpi.first.thirdparty.frc2019.opencv:opencv-jni:osxx86-64:3.4.4-5" level="project" />
     <orderEntry type="library" name="Gradle: org.codehaus.jackson:jackson-core-asl:1.7.4" level="project" />
   </component>
 </module>
