@@ -9,6 +9,7 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfInt;
+import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
@@ -62,9 +63,13 @@ public class KumquatVision {
         m_Capture.set(Videoio.CAP_PROP_FRAME_HEIGHT, m_VisionConfig.captureHeight);
         m_Capture.set(Videoio.CAP_PROP_FPS, m_VisionConfig.captureFps);
         while (m_Capture.isOpened()) {
-            boolean hasClients = m_Server.getConnections().length > 0;
-            if (hasClients) {
-                if (!readAndSendFrame()) break;
+            boolean shouldCapture = m_Server.getConnections().length > 0 || m_VisionConfig.showImage;
+            if (shouldCapture) {
+                if (readFrame()) {
+                    sendFrameToConnectedClients();
+                } else {
+                    break;
+                }
             } else {
                 try {
                     Thread.sleep(IDLE_SLEEP_MS);
@@ -74,27 +79,24 @@ public class KumquatVision {
                 }
             }
         }
+        HighGui.destroyAllWindows();
         m_Capture.release();
     }
 
-    private boolean readAndSendFrame() {
+    private boolean readFrame() {
         if (m_Capture.read(m_CaptureMat)) {
-            boolean encoded = Imgcodecs.imencode(".jpg", m_CaptureMat, m_StreamMat, new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 40));
-            if (encoded) {
-                try {
-                    sendFrameToClient();
-                } catch (Exception exception) {
-                    exception.printStackTrace();
-                }
+            if (m_VisionConfig.showImage) {
+                HighGui.imshow("Vision", m_CaptureMat);
+                HighGui.waitKey(1);
             }
+            return Imgcodecs.imencode(".jpg", m_CaptureMat, m_StreamMat, new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 40));
         } else {
             System.err.println("Opened camera, but could not read from it.");
             return false;
         }
-        return true;
     }
 
-    private void sendFrameToClient() {
+    private void sendFrameToConnectedClients() {
         for (Connection connection : m_Server.getConnections()) {
             if (connection.isConnected()) {
                 final var bytes = m_StreamMat.toArray();

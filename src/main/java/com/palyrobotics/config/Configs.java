@@ -19,7 +19,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Configs {
 
     private static final String CONFIG_FOLDER_NAME = "config";
-    private static final Path CONFIG_FOLDER = Paths.get(System.getProperty("user.home"), CONFIG_FOLDER_NAME);
+    private static final String sConfigPathEnv = System.getenv("CONFIG_PATH");
+    private static final Path sConfigFolder = sConfigPathEnv == null
+            ? Paths.get(System.getProperty("user.home"), CONFIG_FOLDER_NAME)
+            : Paths.get(sConfigPathEnv);
     private static final ConcurrentHashMap<String, Class<? extends AbstractConfig>> sNameToClass = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Class<? extends AbstractConfig>, AbstractConfig> sConfigMap = new ConcurrentHashMap<>();
     private static ObjectMapper sMapper = new ObjectMapper();
@@ -32,6 +35,10 @@ public class Configs {
 
     static {
         sModifiedListener.start();
+    }
+
+    static ObjectMapper getMapper() {
+        return sMapper;
     }
 
     private Configs() {
@@ -63,7 +70,7 @@ public class Configs {
     private static void runWatchService() {
         try {
             WatchService watcher = FileSystems.getDefault().newWatchService();
-            CONFIG_FOLDER.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
+            sConfigFolder.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
             while (true) {
                 try {
                     if (!waitForChangesAndReload(watcher)) break;
@@ -112,9 +119,7 @@ public class Configs {
     }
 
     /**
-     * Read the given config from the filesystem. There must be a file and it must be valid mappable JSON,
-     * desired behavior is to crash if else. In attempt to help the user when there is an invalid JSON file,
-     * a default empty class of the same type is printed to console to show desired format (helpful for debugging).
+     * Read the given config from the filesystem.
      *
      * @param configClass Class of the config.
      * @param <T>         Type of the config. Must extend {@link AbstractConfig}.
@@ -125,11 +130,12 @@ public class Configs {
         Path configFile = getFileForConfig(configClass);
         String configClassName = configClass.getSimpleName();
         if (!Files.exists(configFile)) {
-            String errorMessage = String.format(
-                    "A config file was not found for %s. Critical error, aborting.%n%n%s%n",
-                    configClassName, getDefaultJson(configClass)
+            T defaultConfig = getDefault(configClass);
+            System.err.printf(
+                    "A config file was not found for %s. Using default. Consider making one.%n%n%s%n",
+                    configClassName, toPrettyJson(defaultConfig)
             );
-            throw new RuntimeException(errorMessage);
+            return defaultConfig;
         }
         try {
             T value = sMapper.readValue(configFile.toFile(), configClass);
@@ -142,27 +148,42 @@ public class Configs {
         }
     }
 
-    private static String getDefaultJson(Class<? extends AbstractConfig> configClass) {
+    private static <T extends AbstractConfig> T getDefault(Class<T> configClass) {
         try {
-            return String.format("See here for a default JSON file:%n%s%n",
-                    sMapper.defaultPrettyPrintingWriter().writeValueAsString(configClass.getConstructor().newInstance()));
-        } catch (IOException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException exception) {
+            return configClass.getConstructor().newInstance();
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException exception) {
             System.err.println("Could not show default JSON representation. Something is wrong with the config class definition.");
             exception.printStackTrace();
-            return "Invalid";
+            return null;
         }
     }
 
     private static RuntimeException handleParseError(IOException readException, Class<? extends AbstractConfig> configClass) {
         String errorMessage = String.format(
                 "An error occurred trying to read config for class %s%n%nSee here for default JSON: %s%n",
-                configClass.getSimpleName(), getDefaultJson(configClass)
+                configClass.getSimpleName(), toPrettyJson(getDefault(configClass))
         );
         return new RuntimeException(errorMessage, readException);
     }
 
+    /**
+     * Helper method to use the {@link #sMapper} of this class to easily produce a JSON string.
+     * This handles errors internally and should only be used for display.
+     *
+     * @param object Any arbitrary object to try and write to JSON.
+     * @return The object in JSON format if possible or else "Invalid"
+     */
+    public static String toPrettyJson(Object object) {
+        try {
+            return sMapper.defaultPrettyPrintingWriter().writeValueAsString(object);
+        } catch (IOException formatException) {
+            formatException.printStackTrace();
+            return "Invalid";
+        }
+    }
+
     private static Path resolveConfigPath(String name) {
-        return CONFIG_FOLDER.resolve(String.format("%s.json", name));
+        return sConfigFolder.resolve(String.format("%s.json", name));
     }
 
     private static Path getFileForConfig(Class<? extends AbstractConfig> configClass) {
