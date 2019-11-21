@@ -17,15 +17,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../lib/opencv.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Gradle: kryonet:kryonet:2.21" level="project" />
     <orderEntry type="library" name="Gradle: com.esotericsoftware:kryo:4.0.2" level="project" />
     <orderEntry type="library" name="Gradle: net.sourceforge.argparse4j:argparse4j:0.8.1" level="project" />

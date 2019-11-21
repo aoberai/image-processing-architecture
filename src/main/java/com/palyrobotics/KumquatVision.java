@@ -3,6 +3,8 @@ package com.palyrobotics;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
+import com.palyrobotics.config.Configs;
+import com.palyrobotics.config.VisionConfig;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
@@ -15,24 +17,31 @@ import java.io.IOException;
 
 public class KumquatVision {
 
-    private static final int PORT = 5809;
-
     private static final int BUFFER_SIZE = 50000;
     private static final long IDLE_SLEEP_MS = 200L;
 
     static {
+        // The OpenCV jar just contains a wrapper that allows us to interface with the implementation of OpenCV written in C++
+        // So, we have to load those C++ libraries explicitly and linked them properly.
+        // Just having the jars is not sufficient, OpenCV must be installed into the filesystem manually.
+        // I prefer to build it from source using CMake
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
-    public static void main(String... arguments) throws InterruptedException {
+    private final VisionConfig m_VisionConfig = Configs.get(VisionConfig.class);
+    private final Mat m_CaptureMat = new Mat();
+    private final VideoCapture m_Capture = new VideoCapture(0);
+    private final Server m_Server = new Server(BUFFER_SIZE, BUFFER_SIZE);
+    private final MatOfByte m_StreamMat = new MatOfByte();
+
+    public static void main(String... arguments) {
         new KumquatVision();
     }
 
     private KumquatVision() {
-        var server = new Server(BUFFER_SIZE, BUFFER_SIZE);
-        server.getKryo().register(byte[].class);
-        server.start();
-        server.addListener(new Listener() {
+        m_Server.getKryo().register(byte[].class);
+        m_Server.start();
+        m_Server.addListener(new Listener() {
             @Override
             public void connected(Connection connection) {
                 System.out.println("Connected");
@@ -44,48 +53,56 @@ public class KumquatVision {
             }
         });
         try {
-            server.bind(PORT, PORT);
+            m_Server.bind(m_VisionConfig.port, m_VisionConfig.port);
         } catch (IOException connectException) {
             connectException.printStackTrace();
         }
 
-        var mat = new Mat();
-        var capture = new VideoCapture(0);
-        capture.set(Videoio.CAP_PROP_FRAME_WIDTH, 320); // TODO config variables
-        capture.set(Videoio.CAP_PROP_FRAME_HEIGHT, 240);
-        capture.set(Videoio.CAP_PROP_FPS, 60);
-        var streamMat = new MatOfByte();
-        while (capture.isOpened()) {
-            if (server.getConnections().length > 0) {
-                if (capture.read(mat)) {
-                    boolean encoded = Imgcodecs.imencode(".jpg", mat, streamMat, new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 40));
-                    if (encoded) {
-                        try {
-                            for (Connection connection : server.getConnections()) {
-                                if (connection.isConnected()) {
-                                    final var bytes = streamMat.toArray();
-                                    if (bytes.length < BUFFER_SIZE)
-                                        connection.sendUDP(bytes);
-                                    else
-                                        System.err.println("Too big!");
-                                }
-                            }
-                        } catch (Exception exception) {
-                            exception.printStackTrace();
-                        }
-                    }
-                } else {
-                    System.err.println("Opened camera, but could not read from it.");
-                    break;
-                }
+        m_Capture.set(Videoio.CAP_PROP_FRAME_WIDTH, m_VisionConfig.captureWidth);
+        m_Capture.set(Videoio.CAP_PROP_FRAME_HEIGHT, m_VisionConfig.captureHeight);
+        m_Capture.set(Videoio.CAP_PROP_FPS, m_VisionConfig.captureFps);
+        while (m_Capture.isOpened()) {
+            boolean hasClients = m_Server.getConnections().length > 0;
+            if (hasClients) {
+                if (!readAndSendFrame()) break;
             } else {
                 try {
                     Thread.sleep(IDLE_SLEEP_MS);
                 } catch (InterruptedException sleepException) {
+                    Thread.currentThread().interrupt();
                     break;
                 }
             }
         }
-        capture.release();
+        m_Capture.release();
+    }
+
+    private boolean readAndSendFrame() {
+        if (m_Capture.read(m_CaptureMat)) {
+            boolean encoded = Imgcodecs.imencode(".jpg", m_CaptureMat, m_StreamMat, new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 40));
+            if (encoded) {
+                try {
+                    sendFrameToClient();
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+            }
+        } else {
+            System.err.println("Opened camera, but could not read from it.");
+            return false;
+        }
+        return true;
+    }
+
+    private void sendFrameToClient() {
+        for (Connection connection : m_Server.getConnections()) {
+            if (connection.isConnected()) {
+                final var bytes = m_StreamMat.toArray();
+                if (bytes.length < BUFFER_SIZE)
+                    connection.sendUDP(bytes);
+                else
+                    System.err.println("Too big!");
+            }
+        }
     }
 }
