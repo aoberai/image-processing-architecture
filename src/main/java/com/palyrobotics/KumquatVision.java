@@ -15,11 +15,14 @@ import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 
 public class KumquatVision {
 
     private static final int BUFFER_SIZE = 50000;
     private static final long IDLE_SLEEP_MS = 200L;
+
+    private static final String VERSION = "0.1";
 
     static {
         // The OpenCV jar just contains a wrapper that allows us to interface with the implementation of OpenCV written in C++
@@ -40,25 +43,12 @@ public class KumquatVision {
     }
 
     private KumquatVision() {
-        m_Server.getKryo().register(byte[].class);
-        m_Server.start();
-        m_Server.addListener(new Listener() {
-            @Override
-            public void connected(Connection connection) {
-                System.out.println("Connected");
-            }
+        greatUser();
+        setupServer();
+        handleCapture();
+    }
 
-            @Override
-            public void disconnected(Connection connection) {
-                System.out.println("Disconnected");
-            }
-        });
-        try {
-            m_Server.bind(m_VisionConfig.port, m_VisionConfig.port);
-        } catch (IOException connectException) {
-            connectException.printStackTrace();
-        }
-
+    private void handleCapture() {
         m_Capture.set(Videoio.CAP_PROP_FRAME_WIDTH, m_VisionConfig.captureWidth);
         m_Capture.set(Videoio.CAP_PROP_FRAME_HEIGHT, m_VisionConfig.captureHeight);
         m_Capture.set(Videoio.CAP_PROP_FPS, m_VisionConfig.captureFps);
@@ -81,6 +71,39 @@ public class KumquatVision {
         }
         HighGui.destroyAllWindows();
         m_Capture.release();
+    }
+
+    private void setupServer() {
+        m_Server.getKryo().register(byte[].class);
+        m_Server.start();
+        m_Server.addListener(new Listener() {
+            @Override
+            public void connected(Connection connection) {
+                System.out.println("Connected");
+            }
+
+            @Override
+            public void disconnected(Connection connection) {
+                System.out.println("Disconnected");
+            }
+        });
+        try {
+            m_Server.bind(m_VisionConfig.port, m_VisionConfig.port);
+        } catch (IOException connectException) {
+            connectException.printStackTrace();
+        }
+    }
+
+    private void greatUser() {
+        String greeting = String.format("Starting Kumquat Vision Version: %s", VERSION);
+        printSeparator(greeting.length());
+        System.out.println(greeting);
+        printSeparator(greeting.length());
+    }
+
+    private void printSeparator(int length) {
+        Stream.generate(() -> "/").limit(length).forEach(System.out::print);
+        System.out.println();
     }
 
     private boolean readFrame() {

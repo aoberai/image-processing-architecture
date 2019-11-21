@@ -1,0 +1,15 @@
+[Unit]
+Description=Vision Server for FRC
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=/root/
+Restart=always
+RestartSec=2
+User=root
+ExecStart=/usr/bin/java -jar /root/vision.jar
+
+[Install]
+WantedBy=multi-user.target

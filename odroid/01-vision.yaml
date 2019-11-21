@@ -1,0 +1,9 @@
+network:
+        version: 2
+        renderer: networkd
+        ethernets:
+                eth0:
+                        dhcp4: no
+                        dhcp6: no
+                        addresses: [10.0.8.88/24]
+                        gateway4: 10.0.8.1
