@@ -19,7 +19,8 @@ repositories {
 }
 
 dependencies {
-    compile 'kryonet:kryonet:2.21-2'
+    compile 'kryonet:kryonet:2.21'
+    compile 'com.esotericsoftware:kryo:4.0.2'
     compile 'net.sourceforge.argparse4j:argparse4j:0.8.1'
     compile 'com.fasterxml:jackson-module-json-org:0.9.1'
     compile fileTree(dir: 'lib', include: ['*.jar'])
