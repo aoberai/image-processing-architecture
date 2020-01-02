@@ -141,6 +141,9 @@ public class KumquatVision {
                     Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
                             new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
                 }
+//                mContourPointGetter.clear();
+                mContoursCandidates.clear();
+                largestContourIndex = -1;
                 HighGui.imshow("Vision", mCaptureMatHSV);
                 HighGui.waitKey(1);
             }

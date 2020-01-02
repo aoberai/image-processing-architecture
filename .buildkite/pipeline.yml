@@ -1,3 +1,5 @@
 steps:
   - label: ':hammer: Building'
-    command: 'chmod +x gradlew && ./gradlew build'
+    command: 'chmod +x gradlew && ./gradlew build'mContourPointGetter.clear();
+               mContoursCandidates.clear();
+               largestContourIndex = -1;
