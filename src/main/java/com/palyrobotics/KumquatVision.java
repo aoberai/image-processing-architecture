@@ -120,8 +120,9 @@ public class KumquatVision {
                 mFrameHSV = mCaptureMatHSV.clone();
                 Imgproc.blur(mFrameHSV, mFrameHSV, new Size(25, 25));
                 Imgproc.cvtColor(mFrameHSV, mFrameHSV, Imgproc.COLOR_BGR2HSV);
-                final Scalar lowerBoundHSV = new Scalar(5, 150, 153);
-                final Scalar upperBoundHSV = new Scalar(15, 206, 255);
+                final Scalar lowerBoundHSV = new Scalar(0, 0, 0);
+                final Scalar upperBoundHSV = new Scalar(150, 255, 255);
+
                 Core.inRange(mFrameHSV, lowerBoundHSV, upperBoundHSV, mFrameHSV); // masks image to only allow orange objects
                 Imgproc.findContours(mFrameHSV, mContoursCandidates, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE); // Takes the top level contour in image
 
@@ -141,7 +142,8 @@ public class KumquatVision {
                     Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
                             new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
                 }
-//                mContourPointGetter.clear();
+                Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
+                        new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
                 mContoursCandidates.clear();
                 largestContourIndex = -1;
                 HighGui.imshow("Vision", mCaptureMatHSV);
