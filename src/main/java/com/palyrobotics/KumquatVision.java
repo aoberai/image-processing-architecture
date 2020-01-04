@@ -1,5 +1,6 @@
 package com.palyrobotics;
 
+import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
@@ -12,6 +13,7 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Stream;
@@ -30,6 +32,7 @@ public class KumquatVision {
         // I prefer to build it from source using CMake
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
+
 
     private Point centroidPoint = new Point();
     private final VisionConfig m_VisionConfig = Configs.get(VisionConfig.class);
@@ -51,6 +54,7 @@ public class KumquatVision {
     }
 
     private KumquatVision() {
+        new File("image.jpg");
         greatUser();
         setupServer();
         handleCapture();
@@ -64,7 +68,7 @@ public class KumquatVision {
             boolean shouldCapture = m_Server.getConnections().length > 0 || m_VisionConfig.showImage;
             if (shouldCapture) {
                 if (readFrame()) {
-                    sendFrameToConnectedClients();
+                   sendFrameToConnectedClients();
                 } else {
                     break;
                 }
@@ -82,7 +86,9 @@ public class KumquatVision {
     }
 
     private void setupServer() {
-        m_Server.getKryo().register(byte[].class);
+        Kryo kryo = m_Server.getKryo();
+        kryo.register(byte[].class);
+//        kryo.register(MatOfPoint.class);
         m_Server.start();
         m_Server.addListener(new Listener() {
             @Override
@@ -100,6 +106,24 @@ public class KumquatVision {
         } catch (IOException connectException) {
             connectException.printStackTrace();
         }
+//        otherServer.getKryo().register(MatOfPoint.class);
+//        otherServer.start();
+//        otherServer.addListener(new Listener() {
+//            @Override
+//            public void connected(Connection connection) {
+//                System.out.println("Connected");
+//            }
+//
+//            @Override
+//            public void disconnected(Connection connection) {
+//                System.out.println("Disconnected");
+//            }
+//        });
+//        try {
+//            otherServer.bind(5808, 5808);
+//        } catch (IOException connectException) {
+//            connectException.printStackTrace();
+//        }
     }
 
     private void greatUser() {
@@ -120,8 +144,8 @@ public class KumquatVision {
                 mFrameHSV = mCaptureMatHSV.clone();
                 Imgproc.blur(mFrameHSV, mFrameHSV, new Size(25, 25));
                 Imgproc.cvtColor(mFrameHSV, mFrameHSV, Imgproc.COLOR_BGR2HSV);
-                final Scalar lowerBoundHSV = new Scalar(0, 0, 0);
-                final Scalar upperBoundHSV = new Scalar(150, 255, 255);
+                final Scalar lowerBoundHSV = new Scalar(100, 0, 0);
+                final Scalar upperBoundHSV = new Scalar(255, 255, 255);
 
                 Core.inRange(mFrameHSV, lowerBoundHSV, upperBoundHSV, mFrameHSV); // masks image to only allow orange objects
                 Imgproc.findContours(mFrameHSV, mContoursCandidates, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE); // Takes the top level contour in image
@@ -142,10 +166,10 @@ public class KumquatVision {
                     Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
                             new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
                 }
-                Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
-                        new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
+//                mContourPointGetter.clear();
                 mContoursCandidates.clear();
                 largestContourIndex = -1;
+
                 HighGui.imshow("Vision", mCaptureMatHSV);
                 HighGui.waitKey(1);
             }
@@ -157,14 +181,19 @@ public class KumquatVision {
     }
 
     private void sendFrameToConnectedClients() {
+//        HighGui.imshow("Vision", Imgcodecs.imdecode(new MatOfByte(m_StreamMat), 1));
+//        HighGui.waitKey(1);
+
+        Imgcodecs.imwrite("image.jpg", Imgcodecs.imdecode(new MatOfByte(m_StreamMat), 1));
         for (Connection connection : m_Server.getConnections()) {
             if (connection.isConnected()) {
                 final var bytes = m_StreamMat.toArray();
-                if (bytes.length < BUFFER_SIZE)
+                if (bytes.length < BUFFER_SIZE) {
                     connection.sendUDP(bytes);
+                }
                 else
                     System.err.println("Too big!");
             }
-        }
-    }
+
+        } }
 }
