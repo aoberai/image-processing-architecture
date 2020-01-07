@@ -1,6 +1,5 @@
 package com.palyrobotics;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
@@ -10,10 +9,10 @@ import org.opencv.core.*;
 import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Stream;
@@ -40,21 +39,25 @@ public class KumquatVision {
     private Mat mFrameHSV = new Mat();
     private ArrayList<MatOfPoint> mContoursCandidates = new ArrayList<>();
     private final VideoCapture m_Capture = new VideoCapture(0);
-    private final Server m_Server = new Server(BUFFER_SIZE, BUFFER_SIZE);
+    private final Server mStreamServer = new Server(BUFFER_SIZE, BUFFER_SIZE);
+    private final Server mDataServer = new Server(BUFFER_SIZE, BUFFER_SIZE);
     private final MatOfByte m_StreamMat = new MatOfByte();
     private int largestContourIndex = -1;
+    private ArrayList<Moments> mContourPointGetter = new ArrayList<>();
+    private Moments mContourCoor = new Moments();
+
+    final Scalar lowerBoundHSV = new Scalar(5, 100, 100);
+    final Scalar upperBoundHSV = new Scalar(15, 206, 255);
     private final Scalar kBlack = new Scalar(0, 0, 0); // colors used to point out objects within live video feed
     private final Scalar kWhite = new Scalar(256, 256, 256);
     private final Scalar kRed = new Scalar(0, 0, 256);
     private final Scalar kPink = new Scalar(100, 100, 256);
-
 
     public static void main(String... arguments) {
         new KumquatVision();
     }
 
     private KumquatVision() {
-        new File("image.jpg");
         greatUser();
         setupServer();
         handleCapture();
@@ -65,10 +68,10 @@ public class KumquatVision {
         m_Capture.set(Videoio.CAP_PROP_FRAME_HEIGHT, m_VisionConfig.captureHeight);
         m_Capture.set(Videoio.CAP_PROP_FPS, m_VisionConfig.captureFps);
         while (m_Capture.isOpened()) {
-            boolean shouldCapture = m_Server.getConnections().length > 0 || m_VisionConfig.showImage;
+            boolean shouldCapture = mStreamServer.getConnections().length > 0 || m_VisionConfig.showImage;
             if (shouldCapture) {
                 if (readFrame()) {
-                   sendFrameToConnectedClients();
+                    sendFrameToConnectedClients();
                 } else {
                     break;
                 }
@@ -86,11 +89,23 @@ public class KumquatVision {
     }
 
     private void setupServer() {
-        Kryo kryo = m_Server.getKryo();
-        kryo.register(byte[].class);
-//        kryo.register(MatOfPoint.class);
-        m_Server.start();
-        m_Server.addListener(new Listener() {
+        mStreamServer.getKryo().register(byte[].class);
+        mStreamServer.start();
+        mStreamServer.addListener(new Listener() {
+            @Override
+            public void connected(Connection connection) {
+                System.out.println("Connected");
+            }
+
+            @Override
+            public void disconnected(Connection connection) {
+                System.out.println("Disconnected");
+            }
+        });
+
+        mDataServer.getKryo().register(Point.class);
+        mDataServer.start();
+        mDataServer.addListener(new Listener() {
             @Override
             public void connected(Connection connection) {
                 System.out.println("Connected");
@@ -102,28 +117,11 @@ public class KumquatVision {
             }
         });
         try {
-            m_Server.bind(m_VisionConfig.port, m_VisionConfig.port);
+            mStreamServer.bind(m_VisionConfig.streamPort, m_VisionConfig.streamPort);
+            mDataServer.bind(m_VisionConfig.dataPort, m_VisionConfig.dataPort);
         } catch (IOException connectException) {
             connectException.printStackTrace();
         }
-//        otherServer.getKryo().register(MatOfPoint.class);
-//        otherServer.start();
-//        otherServer.addListener(new Listener() {
-//            @Override
-//            public void connected(Connection connection) {
-//                System.out.println("Connected");
-//            }
-//
-//            @Override
-//            public void disconnected(Connection connection) {
-//                System.out.println("Disconnected");
-//            }
-//        });
-//        try {
-//            otherServer.bind(5808, 5808);
-//        } catch (IOException connectException) {
-//            connectException.printStackTrace();
-//        }
     }
 
     private void greatUser() {
@@ -140,39 +138,16 @@ public class KumquatVision {
 
     private boolean readFrame() {
         if (m_Capture.read(mCaptureMatHSV)) {
-            if (m_VisionConfig.showImage) {
-                mFrameHSV = mCaptureMatHSV.clone();
-                Imgproc.blur(mFrameHSV, mFrameHSV, new Size(25, 25));
-                Imgproc.cvtColor(mFrameHSV, mFrameHSV, Imgproc.COLOR_BGR2HSV);
-                final Scalar lowerBoundHSV = new Scalar(100, 0, 0);
-                final Scalar upperBoundHSV = new Scalar(255, 255, 255);
-
-                Core.inRange(mFrameHSV, lowerBoundHSV, upperBoundHSV, mFrameHSV); // masks image to only allow orange objects
-                Imgproc.findContours(mFrameHSV, mContoursCandidates, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE); // Takes the top level contour in image
-
-                if (mContoursCandidates.size() > 0) {
-                    for (int i = 0; i < mContoursCandidates.size(); i++) {
-                        if (largestContourIndex == -1) {
-                            largestContourIndex = i;
-                        } else if (Imgproc.contourArea(mContoursCandidates.get(i)) > Imgproc
-                                .contourArea(mContoursCandidates.get(largestContourIndex))) {
-                            largestContourIndex = i;
-                        }
-                    }
-                    Imgproc.drawContours(mCaptureMatHSV, mContoursCandidates, largestContourIndex, kWhite, 10);
-                    Imgproc.circle(mCaptureMatHSV, centroidPoint, 5, kPink, 20); // draws black circle at contour centroid
-                    Imgproc.line(mCaptureMatHSV, new Point(centroidPoint.x, 0),
-                            new Point(centroidPoint.x, mCaptureMatHSV.rows()), kBlack, 5);
-                    Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
-                            new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
-                }
-//                mContourPointGetter.clear();
-                mContoursCandidates.clear();
-                largestContourIndex = -1;
-
-                HighGui.imshow("Vision", mCaptureMatHSV);
-                HighGui.waitKey(1);
+            preprocessImage();
+            findContours();
+            findLargestContour();
+            if (mContoursCandidates.size() > 0) {
+                findContourCentroid();
+                drawData();
             }
+            reset();
+//          HighGui.imshow("Vision", mCaptureMatHSV);
+//          HighGui.waitKey(1);
             return Imgcodecs.imencode(".jpg", mCaptureMatHSV, m_StreamMat, new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 40));
         } else {
             System.err.println("Opened camera, but could not read from it.");
@@ -180,20 +155,66 @@ public class KumquatVision {
         }
     }
 
-    private void sendFrameToConnectedClients() {
-//        HighGui.imshow("Vision", Imgcodecs.imdecode(new MatOfByte(m_StreamMat), 1));
-//        HighGui.waitKey(1);
+    public void preprocessImage() {
+        mFrameHSV = mCaptureMatHSV.clone();
+        Imgproc.blur(mFrameHSV, mFrameHSV, new Size(25, 25));
+        Imgproc.cvtColor(mFrameHSV, mFrameHSV, Imgproc.COLOR_BGR2HSV);
+    }
 
-        Imgcodecs.imwrite("image.jpg", Imgcodecs.imdecode(new MatOfByte(m_StreamMat), 1));
-        for (Connection connection : m_Server.getConnections()) {
+    public void findContours() {
+        Core.inRange(mFrameHSV, lowerBoundHSV, upperBoundHSV, mFrameHSV); // masks image to only allow orange objects
+        Imgproc.findContours(mFrameHSV, mContoursCandidates, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE); // Takes the top level contour in image
+    }
+
+    public void findLargestContour() {
+        for (int i = 0; i < mContoursCandidates.size(); i++) {
+            if (largestContourIndex == -1) {
+                largestContourIndex = i;
+            } else if (Imgproc.contourArea(mContoursCandidates.get(i)) > Imgproc
+                    .contourArea(mContoursCandidates.get(largestContourIndex))) {
+                largestContourIndex = i;
+            }
+        }
+    }
+
+    public void findContourCentroid() {
+        mContourPointGetter.add(0, Imgproc.moments(mContoursCandidates.get(largestContourIndex), false));
+        mContourCoor = mContourPointGetter.get(0);
+        centroidPoint.x = (int) (mContourCoor.get_m10() / mContourCoor.get_m00());
+        centroidPoint.y = (int) (mContourCoor.get_m01() / mContourCoor.get_m00());
+    }
+
+    public void drawData() {
+        Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
+                new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
+        Imgproc.drawContours(mCaptureMatHSV, mContoursCandidates, largestContourIndex, kWhite, 10);
+        Imgproc.circle(mCaptureMatHSV, centroidPoint, 5, kPink, 20); // draws black circle at contour centroid
+        Imgproc.line(mCaptureMatHSV, new Point(centroidPoint.x, 0),
+                new Point(centroidPoint.x, mCaptureMatHSV.rows()), kBlack, 5);
+    }
+
+    public void reset() {
+        mContourPointGetter.clear();
+        mContoursCandidates.clear();
+        largestContourIndex = -1;
+    }
+
+    private void sendFrameToConnectedClients() {
+        for (Connection connection : mStreamServer.getConnections()) {
             if (connection.isConnected()) {
                 final var bytes = m_StreamMat.toArray();
-                if (bytes.length < BUFFER_SIZE) {
+                if (bytes.length < BUFFER_SIZE)
                     connection.sendUDP(bytes);
-                }
                 else
                     System.err.println("Too big!");
             }
-
-        } }
+        }
+        for (Connection connection : mDataServer.getConnections()) {
+            if (connection.isConnected()) {
+                connection.sendUDP(centroidPoint);
+            }
+        }
+    }
 }
+
+
