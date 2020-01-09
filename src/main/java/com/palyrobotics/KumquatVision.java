@@ -46,7 +46,7 @@ public class KumquatVision {
     private ArrayList<Moments> mContourPointGetter = new ArrayList<>();
     private Moments mContourCoor = new Moments();
 
-    final Scalar lowerBoundHSV = new Scalar(5, 100, 100);
+    final Scalar lowerBoundHSV = new Scalar(5, 120, 150);
     final Scalar upperBoundHSV = new Scalar(15, 206, 255);
     private final Scalar kBlack = new Scalar(0, 0, 0); // colors used to point out objects within live video feed
     private final Scalar kWhite = new Scalar(256, 256, 256);
@@ -103,7 +103,7 @@ public class KumquatVision {
             }
         });
 
-        mDataServer.getKryo().register(Point.class);
+        mDataServer.getKryo().register(Double.class);
         mDataServer.start();
         mDataServer.addListener(new Listener() {
             @Override
@@ -145,7 +145,7 @@ public class KumquatVision {
                 findContourCentroid();
                 drawData();
             }
-            reset();
+//            System.out.println((mCaptureMatHSV.cols()/2) - centroidPoint.x);
 //          HighGui.imshow("Vision", mCaptureMatHSV);
 //          HighGui.waitKey(1);
             return Imgcodecs.imencode(".jpg", mCaptureMatHSV, m_StreamMat, new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 40));
@@ -197,9 +197,12 @@ public class KumquatVision {
         mContourPointGetter.clear();
         mContoursCandidates.clear();
         largestContourIndex = -1;
+        centroidPoint = new Point(0,0);
     }
 
     private void sendFrameToConnectedClients() {
+        System.out.println((mCaptureMatHSV.cols()/2) - centroidPoint.x);
+
         for (Connection connection : mStreamServer.getConnections()) {
             if (connection.isConnected()) {
                 final var bytes = m_StreamMat.toArray();
@@ -211,10 +214,11 @@ public class KumquatVision {
         }
         for (Connection connection : mDataServer.getConnections()) {
             if (connection.isConnected()) {
-                connection.sendUDP(centroidPoint);
+                double temp = (mCaptureMatHSV.cols()/2) - centroidPoint.x;
+                connection.sendUDP(temp);
             }
         }
+        reset();
     }
 }
-
 
