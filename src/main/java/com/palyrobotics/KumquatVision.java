@@ -46,8 +46,8 @@ public class KumquatVision {
     private ArrayList<Moments> mContourPointGetter = new ArrayList<>();
     private Moments mContourCoor = new Moments();
 
-    final Scalar lowerBoundHSV = new Scalar(5, 120, 150);
-    final Scalar upperBoundHSV = new Scalar(15, 206, 255);
+    final Scalar lowerBoundHSV = new Scalar(4, 100, 100);
+    final Scalar upperBoundHSV = new Scalar(16, 255, 255);
     private final Scalar kBlack = new Scalar(0, 0, 0); // colors used to point out objects within live video feed
     private final Scalar kWhite = new Scalar(256, 256, 256);
     private final Scalar kRed = new Scalar(0, 0, 256);
@@ -103,7 +103,7 @@ public class KumquatVision {
             }
         });
 
-        mDataServer.getKryo().register(Double.class);
+        mDataServer.getKryo().register(double[].class);
         mDataServer.start();
         mDataServer.addListener(new Listener() {
             @Override
@@ -214,7 +214,7 @@ public class KumquatVision {
         }
         for (Connection connection : mDataServer.getConnections()) {
             if (connection.isConnected()) {
-                double temp = (mCaptureMatHSV.cols()/2) - centroidPoint.x;
+                double temp[] = {(mCaptureMatHSV.cols()/2) - centroidPoint.x, mContoursCandidates.size() > 0 ? Imgproc.contourArea(mContoursCandidates.get(largestContourIndex)) : 0};
                 connection.sendUDP(temp);
             }
         }
