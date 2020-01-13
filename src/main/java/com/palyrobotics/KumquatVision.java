@@ -46,8 +46,8 @@ public class KumquatVision {
     private ArrayList<Moments> mContourPointGetter = new ArrayList<>();
     private Moments mContourCoor = new Moments();
 
-    final Scalar lowerBoundHSV = new Scalar(4, 100, 100);
-    final Scalar upperBoundHSV = new Scalar(16, 255, 255);
+    final Scalar lowerBoundHSV = new Scalar(5, 120, 120);
+    final Scalar upperBoundHSV = new Scalar(15, 220, 220);
     private final Scalar kBlack = new Scalar(0, 0, 0); // colors used to point out objects within live video feed
     private final Scalar kWhite = new Scalar(256, 256, 256);
     private final Scalar kRed = new Scalar(0, 0, 256);
