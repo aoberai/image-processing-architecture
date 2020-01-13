@@ -46,8 +46,8 @@ public class KumquatVision {
     private ArrayList<Moments> mContourPointGetter = new ArrayList<>();
     private Moments mContourCoor = new Moments();
 
-    final Scalar lowerBoundHSV = new Scalar(5, 120, 120);
-    final Scalar upperBoundHSV = new Scalar(15, 220, 220);
+    final Scalar lowerBoundHSV = new Scalar(22, 102, 154);
+    final Scalar upperBoundHSV = new Scalar(41, 255, 255);
     private final Scalar kBlack = new Scalar(0, 0, 0); // colors used to point out objects within live video feed
     private final Scalar kWhite = new Scalar(256, 256, 256);
     private final Scalar kRed = new Scalar(0, 0, 256);
@@ -114,14 +114,14 @@ public class KumquatVision {
             @Override
             public void disconnected(Connection connection) {
                 System.out.println("Disconnected");
+                while(!(mDataServer.getConnections().length > 0)) {
+                    tryConnect();
+                }
             }
         });
-        try {
-            mStreamServer.bind(m_VisionConfig.streamPort, m_VisionConfig.streamPort);
-            mDataServer.bind(m_VisionConfig.dataPort, m_VisionConfig.dataPort);
-        } catch (IOException connectException) {
-            connectException.printStackTrace();
-        }
+        tryConnect();
+//            mStreamServer.bind(m_VisionConfig.streamPort, m_VisionConfig.streamPort);
+//            mDataServer.bind(m_VisionConfig.dataPort, m_VisionConfig.dataPort);
     }
 
     private void greatUser() {
@@ -157,6 +157,7 @@ public class KumquatVision {
 
     public void preprocessImage() {
         mFrameHSV = mCaptureMatHSV.clone();
+        Imgproc.resize(mFrameHSV, mFrameHSV, new Size (520, 440)); //original is 320x240
         Imgproc.blur(mFrameHSV, mFrameHSV, new Size(25, 25));
         Imgproc.cvtColor(mFrameHSV, mFrameHSV, Imgproc.COLOR_BGR2HSV);
     }
@@ -180,14 +181,15 @@ public class KumquatVision {
     public void findContourCentroid() {
         mContourPointGetter.add(0, Imgproc.moments(mContoursCandidates.get(largestContourIndex), false));
         mContourCoor = mContourPointGetter.get(0);
-        centroidPoint.x = (int) (mContourCoor.get_m10() / mContourCoor.get_m00());
-        centroidPoint.y = (int) (mContourCoor.get_m01() / mContourCoor.get_m00());
+        centroidPoint.x = (int) (mContourCoor.get_m10() / (mContourCoor.get_m00() * 1.625));
+        centroidPoint.y = (int) (mContourCoor.get_m01() / (mContourCoor.get_m00() * 1.625));
     }
 
     public void drawData() {
         Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
                 new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
-        Imgproc.drawContours(mCaptureMatHSV, mContoursCandidates, largestContourIndex, kWhite, 10);
+//        mContoursCandidates.get(largestContourIndex) /= 1.625;
+//        Imgproc.drawContours(mCaptureMatHSV, mContoursCandidates, largestContourIndex, kWhite, 10);
         Imgproc.circle(mCaptureMatHSV, centroidPoint, 5, kPink, 20); // draws black circle at contour centroid
         Imgproc.line(mCaptureMatHSV, new Point(centroidPoint.x, 0),
                 new Point(centroidPoint.x, mCaptureMatHSV.rows()), kBlack, 5);
@@ -219,6 +221,23 @@ public class KumquatVision {
             }
         }
         reset();
+    }
+
+    private void tryConnect() {
+        if (!(mDataServer.getConnections().length > 0)) {
+            try {
+                mDataServer.bind(m_VisionConfig.dataPort, m_VisionConfig.dataPort);
+            } catch (IOException connectException) {
+                connectException.printStackTrace();
+            }
+        }
+        if (!(mStreamServer.getConnections().length > 0)) {
+            try {
+                mStreamServer.bind(m_VisionConfig.streamPort, m_VisionConfig.streamPort);
+            } catch (IOException connectException) {
+                connectException.printStackTrace();
+            }
+        }
     }
 }
 
