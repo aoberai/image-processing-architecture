@@ -45,9 +45,13 @@ public class KumquatVision {
     private int largestContourIndex = -1;
     private ArrayList<Moments> mContourPointGetter = new ArrayList<>();
     private Moments mContourCoor = new Moments();
+    private MatOfPoint2f contourToFloat = new MatOfPoint2f();
+    private float[] radiusOfContour = new float[1];
 
-    final Scalar lowerBoundHSV = new Scalar(22, 102, 154);
-    final Scalar upperBoundHSV = new Scalar(41, 255, 255);
+    Scalar lowerBoundHSV = new Scalar(22, 102, 154);
+    Scalar upperBoundHSV = new Scalar(41, 255, 255);
+    int blurFactor = 25;
+    int minAreaFilter = 100;
 
     private final Scalar kBlack = new Scalar(0, 0, 0); // colors used to point out objects within live video feed
     private final Scalar kWhite = new Scalar(256, 256, 256);
@@ -109,12 +113,28 @@ public class KumquatVision {
         mDataServer.addListener(new Listener() {
             @Override
             public void connected(Connection connection) {
-                System.out.println("Connected");
+                System.out.println("data server connected");
             }
 
             @Override
             public void disconnected(Connection connection) {
                 System.out.println("Disconnected");
+            }
+
+            @Override
+            public void received(Connection connection, Object object) {
+                if(object instanceof double[]) {
+                    double[] temp = (double[]) object;
+                    for(double i : temp) {
+                        System.out.print(i + ", ");
+                    }
+                    System.out.println();
+                    lowerBoundHSV = new Scalar(temp[0], temp[1], temp[2]);
+                    upperBoundHSV = new Scalar(temp[3], temp[4], temp[5]);
+                    blurFactor = (int) temp[6];
+                    minAreaFilter = (int) temp[7];
+                }
+
             }
         });
         try {
@@ -158,8 +178,8 @@ public class KumquatVision {
 
     public void preprocessImage() {
         mFrameHSV = mCaptureMatHSV.clone();
-        Imgproc.resize(mFrameHSV, mFrameHSV, new Size (520, 440)); //original is 320x240
-        Imgproc.blur(mFrameHSV, mFrameHSV, new Size(25, 25));
+//        Imgproc.resize(mFrameHSV, mFrameHSV, new Size (520, 440)); //original is 320x240
+        Imgproc.blur(mFrameHSV, mFrameHSV, new Size(blurFactor, blurFactor));
         Imgproc.cvtColor(mFrameHSV, mFrameHSV, Imgproc.COLOR_BGR2HSV);
     }
 
@@ -182,18 +202,20 @@ public class KumquatVision {
     public void findContourCentroid() {
         mContourPointGetter.add(0, Imgproc.moments(mContoursCandidates.get(largestContourIndex), false));
         mContourCoor = mContourPointGetter.get(0);
-        centroidPoint.x = (int) (mContourCoor.get_m10() / (mContourCoor.get_m00() * 1.625));
-        centroidPoint.y = (int) (mContourCoor.get_m01() / (mContourCoor.get_m00() * 1.625));
+        centroidPoint.x = (int) (mContourCoor.get_m10() / (mContourCoor.get_m00()));
+        centroidPoint.y = (int) (mContourCoor.get_m01() / (mContourCoor.get_m00()));
+        mContoursCandidates.get(largestContourIndex).convertTo(contourToFloat, CvType.CV_32F);
+        Imgproc.minEnclosingCircle(contourToFloat, centroidPoint, radiusOfContour); //Takes contour and extrapolates circle
 
     }
 
     public void drawData() {
-        Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
-                new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
+//        Imgproc.line(mCaptureMatHSV, new Point(mCaptureMatHSV.cols() / 2, 0),
+//                new Point(mCaptureMatHSV.cols() / 2, mCaptureMatHSV.rows()), kRed, 5); // draws center line
 //        Imgproc.drawContours(mCaptureMatHSV, mContoursCandidates, largestContourIndex, kWhite, 10);
-        Imgproc.circle(mCaptureMatHSV, centroidPoint, 5, kPink, 20); // draws black circle at contour centroid
-        Imgproc.line(mCaptureMatHSV, new Point(centroidPoint.x, 0),
-                new Point(centroidPoint.x, mCaptureMatHSV.rows()), kBlack, 5);
+        Imgproc.circle(mCaptureMatHSV, centroidPoint, (int) radiusOfContour[0], kPink, 10); // draws black circle at contour centroid
+//        Imgproc.line(mCaptureMatHSV, new Point(centroidPoint.x, 0),
+//                new Point(centroidPoint.x, mCaptureMatHSV.rows()), kBlack, 5);
     }
 
     public void reset() {
@@ -204,8 +226,6 @@ public class KumquatVision {
     }
 
     private void sendFrameToConnectedClients() {
-        System.out.println((mCaptureMatHSV.cols()/2) - centroidPoint.x);
-
         for (Connection connection : mStreamServer.getConnections()) {
             if (connection.isConnected()) {
                 final var bytes = m_StreamMat.toArray();
