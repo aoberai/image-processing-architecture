@@ -26,11 +26,11 @@ dependencies {
     compile fileTree(dir: 'lib', include: ['*.jar'])
 }
 
-mainClassName = 'com.palyrobotics.KumquatVision'
+mainClassName = 'com.palyrobotics.Main'
 
 jar {
     from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
-        attributes 'Main-Class': 'com.palyrobotics.KumquatVision'
+        attributes 'Main-Class': 'com.palyrobotics.Main'
     }
 }
