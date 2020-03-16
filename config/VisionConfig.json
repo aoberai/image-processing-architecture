@@ -1,3 +1,7 @@
 {
-    "showImage": true
+    "streamPort" : 5809,
+    "dataPort" : 5808,
+    "captureWidth" : 1080,
+    "captureHeight" : 720,
+    "captureFps" : 30
 }

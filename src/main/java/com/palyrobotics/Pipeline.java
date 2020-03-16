@@ -1,5 +1,10 @@
 package com.palyrobotics;
 
-public abstract class Pipeline {
+import java.util.HashMap;
 
+public interface Pipeline {
+    public void start();
+    public void update();
+    public String getName();
+    public HashMap<String, Integer> getData();
 }
