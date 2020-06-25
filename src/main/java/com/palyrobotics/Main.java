@@ -6,11 +6,13 @@ import org.opencv.highgui.HighGui;
 public class Main {
     private static PipelineManager mPipelineManager = new PipelineManager();
 
-    static { System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
+    static {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
 
     public static void main(String[] args) {
         Stream stream = new Stream();
-        while(true) {
+        while (true) {
             stream.capture();
             mPipelineManager.runPipelines();
             HighGui.imshow("Vision", Stream.getCameraCaptures()[0]);

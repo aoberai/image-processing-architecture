@@ -10,7 +10,7 @@ public class PipelineManager {
 
     public void runPipelines() {
         Communication.dataToSend.clear();
-        for(Pipeline pipeline : mPipelineSequence) {
+        for (Pipeline pipeline : mPipelineSequence) {
             pipeline.start();
             pipeline.update();
             Communication.dataToSend.put(pipeline.getName(), pipeline.getData());
